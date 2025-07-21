@@ -6,9 +6,12 @@ from itertools import product
 from joblib import Parallel, delayed
 from tqdm import tqdm
 import random
+import os
 
 from ..backtest.backtest_engine import BacktestEngine
 from config.parameters import ParameterValidator
+from src.utils.file_utils import FileManager
+from src.utils.progress import parallel_progress
 
 
 class ParameterOptimizer:
@@ -239,53 +242,47 @@ class ParameterOptimizer:
             }
 
     def optimize_parameters(self, data: pd.DataFrame, parameter_space: Dict[str, List[Any]],
-                            max_combinations: int = 500, n_jobs: int = -1, score_weights: dict = None) -> Tuple[
+                            max_combinations: int = 500, n_jobs: int = -1, score_weights: dict = None,
+                            batch_size: int = 100, results_path: str = None) -> Tuple[
         Dict[str, Any], List[Dict[str, Any]]]:
-        """Executa otimização completa de parâmetros"""
-
+        """Executa otimização completa de parâmetros com salvamento em lote opcional"""
+        import pandas as pd
+        import os
         logging.info("🔬 Iniciando otimização de parâmetros")
-
-        # Gerar combinações
         parameter_combinations = self.generate_parameter_combinations(parameter_space, max_combinations)
-
         logging.info(f"📊 Testando {len(parameter_combinations)} combinações")
-
-        # Executar backtests em paralelo
         if n_jobs == -1:
-            n_jobs = min(4, len(parameter_combinations))  # Limitar para não sobrecarregar
-
-        results = Parallel(n_jobs=n_jobs, verbose=1)(
-            delayed(self._run_single_backtest)(data, params)
-            for params in tqdm(parameter_combinations, desc="Executando backtests")
-        )
-
-        # Filtrar resultados válidos
-        valid_results = [r for r in results if r.get('total_trades', 0) > 0 and 'error' not in r]
-
-        if not valid_results:
+            n_jobs = min(4, len(parameter_combinations))
+        results = []
+        batch = []
+        def run_and_collect(params):
+            return self._run_single_backtest(data, params)
+        opt_results = parallel_progress(run_and_collect, parameter_combinations, n_jobs=n_jobs, desc="Otimização", unit="comb")
+        for i, result in enumerate(opt_results):
+            if result.get('total_trades', 0) > 0 and 'error' not in result:
+                batch.append(result)
+                results.append(result)
+            if results_path and len(batch) >= batch_size:
+                FileManager.save_batch(batch, results_path)
+                batch = []
+        if results_path and batch:
+            FileManager.save_batch(batch, results_path)
+        if not results:
             raise ValueError("Nenhum backtest válido foi executado")
-
-        logging.info(f"✅ Backtests válidos: {len(valid_results)}/{len(results)}")
-
-        # Encontrar melhor configuração
-        best_result = self._select_best_configuration(valid_results, score_weights=score_weights)
-
-        # Extrair parâmetros da melhor configuração
+        logging.info(f"✅ Backtests válidos: {len(results)}/{len(parameter_combinations)}")
+        best_result = self._select_best_configuration(results, score_weights=score_weights)
         best_params = {}
         for key, value in best_result.items():
             if key.startswith('param_'):
                 param_name = key.replace('param_', '')
                 best_params[param_name] = value
-
         logging.info("🏆 Melhor configuração encontrada:")
         for param, value in best_params.items():
             logging.info(f"   {param}: {value}")
-
         logging.info(f"📈 Performance: {best_result['total_return']:.2%} retorno, "
                      f"{best_result['max_drawdown']:.2%} drawdown, "
                      f"{best_result['sharpe_ratio']:.3f} Sharpe")
-
-        return best_params, valid_results
+        return best_params, results
 
     def _select_best_configuration(self, results: List[Dict[str, Any]], score_weights: dict = None) -> Dict[str, Any]:
         """Seleciona a melhor configuração usando múltiplos critérios e pesos configuráveis"""

@@ -15,6 +15,7 @@ plotly>=5.10.0
 
 # Progress bars
 tqdm>=4.64.0
+tqdm-joblib
 
 # Environment management
 python-dotenv>=0.19.0

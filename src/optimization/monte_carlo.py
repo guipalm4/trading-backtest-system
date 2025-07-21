@@ -4,9 +4,18 @@ from typing import Dict, List, Any, Tuple
 import logging
 import random
 from tqdm import tqdm
-
+from joblib import Parallel, delayed
+import os
 from ..backtest.backtest_engine import BacktestEngine
+from src.utils.file_utils import FileManager
+from src.utils.progress import parallel_progress
 
+# Cache simples de indicadores (em memória)
+_indicator_cache = {}
+
+def _get_indicator_cache_key(data, config):
+    # Cria uma chave baseada em hash dos dados e dos parâmetros principais
+    return (hash(data.to_csv(index=False)), str(sorted(config.items())))
 
 class MonteCarloValidator:
     """Validador Monte Carlo para análise de robustez"""
@@ -84,31 +93,33 @@ class MonteCarloValidator:
     def run_monte_carlo_simulation(self, data: pd.DataFrame, config: Dict[str, Any],
                                    n_simulations: int = 1000, sample_ratio: float = 0.8,
                                    use_block_bootstrap: bool = True,
-                                   add_noise: bool = True) -> List[Dict[str, Any]]:
-        """Executa simulação Monte Carlo completa"""
-
-        logging.info(f"🎲 Iniciando simulação Monte Carlo: {n_simulations} simulações")
-
-        results = []
-
-        for i in tqdm(range(n_simulations), desc="Executando simulações Monte Carlo"):
+                                   add_noise: bool = True, n_jobs: int = None,
+                                   batch_size: int = 100, results_path: str = None) -> List[Dict[str, Any]]:
+        """Executa simulação Monte Carlo completa com paralelismo, otimizações e salvamento em lote"""
+        import pandas as pd
+        import os
+        logging.info(f"🎲 Iniciando simulação Monte Carlo ({n_simulations} simulações)...")
+        if n_jobs is None:
+            n_jobs = os.cpu_count() or 2
+        def run_single_simulation(i):
             try:
-                # Criar amostra dos dados
                 if use_block_bootstrap:
                     sampled_data = self.block_bootstrap_data(data, sample_ratio=sample_ratio)
                 else:
                     sampled_data = self.bootstrap_data(data, sample_ratio=sample_ratio)
-
-                # Adicionar ruído se solicitado
                 if add_noise:
                     sampled_data = self.noise_injection_data(sampled_data, noise_level=0.005)
-
-                # Executar backtest
-                # Ao rodar o backtest, use config = STRATEGY_CONFIG.__dict__.copy(); config.update(config_param) se necessário, antes de passar para o BacktestEngine.
-                engine = BacktestEngine(self.initial_capital, self.commission)
-                result = engine.run_backtest(sampled_data, config)
-
-                # Adicionar informações da simulação
+                for col in ['open', 'high', 'low', 'close', 'volume']:
+                    if col in sampled_data:
+                        sampled_data[col] = sampled_data[col].astype('float32')
+                cache_key = _get_indicator_cache_key(sampled_data, config)
+                if cache_key in _indicator_cache:
+                    indicators = _indicator_cache[cache_key]
+                else:
+                    engine = BacktestEngine(self.initial_capital, self.commission)
+                    indicators = engine.run_backtest(sampled_data, config)
+                    _indicator_cache[cache_key] = indicators
+                result = indicators
                 simulation_result = {
                     'simulation': i + 1,
                     'sample_size': len(sampled_data),
@@ -122,18 +133,26 @@ class MonteCarloValidator:
                     'net_profit': result['net_profit'],
                     'largest_win': result['largest_win'],
                     'largest_loss': result['largest_loss'],
-                    'avg_trade_duration': result['avg_trade_duration'].total_seconds() / 3600 if result[
-                        'avg_trade_duration'] else 0  # em horas
+                    'avg_trade_duration': result['avg_trade_duration'].total_seconds() / 3600 if result['avg_trade_duration'] else 0
                 }
-
-                results.append(simulation_result)
-
+                return simulation_result
             except Exception as e:
-                logging.warning(f"Erro na simulação {i + 1}: {e}")
-                continue
-
+                logging.debug(f"Erro na simulação {i + 1}: {e}")
+                return None
+        # Barra de progresso geral
+        results = []
+        batch = []
+        sim_results = parallel_progress(run_single_simulation, range(n_simulations), n_jobs=n_jobs, desc="Simulações Monte Carlo", unit="sim")
+        for i, sim_result in enumerate(sim_results):
+            if sim_result is not None:
+                batch.append(sim_result)
+                results.append(sim_result)
+            if results_path and len(batch) >= batch_size:
+                FileManager.save_batch(batch, results_path)
+                batch = []
+        if results_path and batch:
+            FileManager.save_batch(batch, results_path)
         logging.info(f"✅ Monte Carlo concluído: {len(results)} simulações válidas")
-
         return results
 
     def calculate_statistics(self, mc_results: List[Dict[str, Any]]) -> Dict[str, Any]:

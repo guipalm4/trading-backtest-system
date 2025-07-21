@@ -140,9 +140,9 @@ class BacktestEngine:
         signal_generator = SignalGenerator(config)
         data_with_signals = signal_generator.generate_signals_for_backtest(data_with_indicators)
         # Simular trades
-        for i, row in data_with_signals.iterrows():
-            current_price = row['close']
-            timestamp = row['timestamp']
+        for row in data_with_signals.itertuples(index=False):
+            current_price = row.close
+            timestamp = row.timestamp
             # Registrar equity
             current_equity = self.capital
             if self.position > 0:
@@ -154,15 +154,15 @@ class BacktestEngine:
                 'position': self.position > 0
             })
             # Executar sinais
-            if row['buy_signal'] and self.position == 0:
+            if row.buy_signal and self.position == 0:
                 quantity = config.get('quantity', None)
                 self.execute_buy(current_price, timestamp, quantity)
-            elif row['sell_signal'] and self.position > 0:
-                self.execute_sell(current_price, timestamp, row['signal_reason'])
+            elif row.sell_signal and self.position > 0:
+                self.execute_sell(current_price, timestamp, row.signal_reason)
         # Fechar posição final se necessário
         if self.position > 0:
             final_row = data_with_signals.iloc[-1]
-            self.execute_sell(final_row['close'], final_row['timestamp'], 'end_of_data')
+            self.execute_sell(final_row.close, final_row.timestamp, 'end_of_data')
         return self.calculate_performance_metrics()
 
     def calculate_performance_metrics(self) -> Dict:

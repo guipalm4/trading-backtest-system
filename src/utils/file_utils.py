@@ -4,6 +4,7 @@ import pandas as pd
 from pathlib import Path
 from typing import Any, Dict, Optional
 import logging
+import os
 
 
 class FileManager:
@@ -141,3 +142,11 @@ class FileManager:
         except Exception as e:
             logging.error(f"Erro ao fazer backup de {filepath}: {e}")
             return False
+
+    @staticmethod
+    def save_batch(batch, results_path, mode='a'):
+        """Salva uma lista de dicionários/DataFrames em lote em CSV."""
+        if not batch:
+            return
+        df = pd.DataFrame(batch)
+        df.to_csv(results_path, mode=mode, header=not os.path.exists(results_path), index=False)

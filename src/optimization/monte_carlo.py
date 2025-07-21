@@ -104,6 +104,7 @@ class MonteCarloValidator:
                     sampled_data = self.noise_injection_data(sampled_data, noise_level=0.005)
 
                 # Executar backtest
+                # Ao rodar o backtest, use config = STRATEGY_CONFIG.__dict__.copy(); config.update(config_param) se necessário, antes de passar para o BacktestEngine.
                 engine = BacktestEngine(self.initial_capital, self.commission)
                 result = engine.run_backtest(sampled_data, config)
 

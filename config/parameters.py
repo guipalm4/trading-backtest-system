@@ -6,26 +6,31 @@ class ParameterSpace:
 
     @staticmethod
     def get_scalping_space() -> Dict[str, List[Any]]:
-        """Parâmetros para scalping menos agressivo"""
+        """Parâmetros para scalping conservador, priorizando robustez e seletividade"""
         return {
-            # Médias móveis um pouco mais longas
-            'fast_ma_period': [5, 7, 9],
-            'slow_ma_period': [12, 15, 18],
-
-            # RSI ainda sensível, mas não extremo
+            # Ativação de indicadores
+            'use_ema': [True],
+            'use_rsi': [True],
+            'use_macd': [False],
+            'use_bollinger': [False, True],
+            'use_volume': [True],
+            'use_momentum': [False, True],
+            # Parâmetros dos indicadores
+            'ema_fast': [5, 7, 9],
+            'ema_slow': [12, 15, 18],
             'rsi_period': [7, 10],
-            'rsi_oversold': [20, 25],
-            'rsi_overbought': [75, 80],
-
-            # Stops e targets um pouco maiores
-            'take_profit_pct': [0.007, 0.01, 0.015],   # 0.7% a 1.5%
-            'stop_loss_pct': [0.007, 0.01, 0.015],     # 0.7% a 1.5%
-
-            # Volume mais exigente
-            'volume_threshold': [1.2, 1.3, 1.4],
-
-            # Score mais seletivo
-            'min_score': [65, 70, 75]
+            'rsi_oversold': [15, 20, 25],
+            'rsi_overbought': [75, 80, 85],
+            'bollinger_period': [20],
+            'volume_ma': [20],
+            'volume_threshold': [1.3, 1.4, 1.5],
+            'min_trend_strength': [0.2, 0.3],
+            'min_score': [70, 75, 80],
+            # Trading
+            'take_profit_pct': [0.005, 0.007, 0.01],
+            'stop_loss_pct': [0.003, 0.005, 0.007],
+            'min_profit_to_sell': [0.002, 0.003, 0.005],
+            'quantity': [0.01],
         }
 
     @staticmethod

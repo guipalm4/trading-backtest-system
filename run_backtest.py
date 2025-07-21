@@ -9,7 +9,7 @@ from datetime import datetime
 import json
 from pathlib import Path
 
-from config.settings import TRADING_CONFIG, INDICATOR_CONFIG, BACKTEST_CONFIG
+from config.settings import STRATEGY_CONFIG
 from config.parameters import ParameterSpace
 from src.data import DataManager
 from src.backtest.backtest_engine import BacktestEngine
@@ -37,9 +37,9 @@ def run_single_backtest():
     # Carregar dados
     data_manager = DataManager()
     data = data_manager.load_data(
-        symbol=TRADING_CONFIG.operation_code,
+        symbol=STRATEGY_CONFIG.operation_code,
         interval='1h',
-        days_back=BACKTEST_CONFIG.days_back,
+        days_back=STRATEGY_CONFIG.days_back,
         source='binance'
     )
 
@@ -48,26 +48,13 @@ def run_single_backtest():
         return
 
     # Configurar parâmetros
-    config = {
-        'fast_ma': INDICATOR_CONFIG.fast_ma,
-        'slow_ma': INDICATOR_CONFIG.slow_ma,
-        'rsi_period': INDICATOR_CONFIG.rsi_period,
-        'rsi_oversold': INDICATOR_CONFIG.rsi_oversold,
-        'rsi_overbought': INDICATOR_CONFIG.rsi_overbought,
-        'take_profit_pct': TRADING_CONFIG.take_profit_percentage,
-        'stop_loss_pct': TRADING_CONFIG.stop_loss_percentage,
-        'min_profit_to_sell': TRADING_CONFIG.min_profit_to_sell,
-        'volume_threshold': INDICATOR_CONFIG.volume_threshold,
-        'min_trend_strength': INDICATOR_CONFIG.min_trend_strength,
-        'min_score': 60,
-        'quantity': TRADING_CONFIG.quantity
-    }
+    config = STRATEGY_CONFIG.__dict__.copy()
 
     # Executar backtest
     engine = BacktestEngine(
-        initial_capital=BACKTEST_CONFIG.initial_capital,
-        commission=BACKTEST_CONFIG.commission,
-        slippage=BACKTEST_CONFIG.slippage
+        initial_capital=STRATEGY_CONFIG.initial_capital,
+        commission=STRATEGY_CONFIG.commission,
+        slippage=STRATEGY_CONFIG.slippage
     )
 
     results = engine.run_backtest(data, config)
@@ -121,9 +108,9 @@ def run_parameter_optimization():
     # Carregar dados
     data_manager = DataManager()
     data = data_manager.load_data(
-        symbol=TRADING_CONFIG.operation_code,
+        symbol=STRATEGY_CONFIG.operation_code,
         interval='1h',
-        days_back=BACKTEST_CONFIG.days_back,
+        days_back=STRATEGY_CONFIG.days_back,
         source='binance'
     )
 
@@ -132,7 +119,7 @@ def run_parameter_optimization():
         return
 
     # Dividir dados para validação
-    train_size = int(len(data) * BACKTEST_CONFIG.train_ratio)
+    train_size = int(len(data) * STRATEGY_CONFIG.train_ratio)
     train_data = data.iloc[:train_size].copy()
     test_data = data.iloc[train_size:].copy()
 
@@ -158,12 +145,16 @@ def run_parameter_optimization():
     # Validar no conjunto de teste
     print(f"\n🧪 VALIDANDO NO CONJUNTO DE TESTE...")
 
+    # Mesclar configuração padrão com parâmetros otimizados
+    final_config = STRATEGY_CONFIG.__dict__.copy()
+    final_config.update(best_params)
+
     engine = BacktestEngine(
-        initial_capital=BACKTEST_CONFIG.initial_capital,
-        commission=BACKTEST_CONFIG.commission
+        initial_capital=STRATEGY_CONFIG.initial_capital,
+        commission=STRATEGY_CONFIG.commission
     )
 
-    test_results = engine.run_backtest(test_data, best_params)
+    test_results = engine.run_backtest(test_data, final_config)
 
     print_backtest_results(test_results, "VALIDAÇÃO OUT-OF-SAMPLE")
 
@@ -182,9 +173,9 @@ def run_walk_forward_analysis():
     # Carregar dados
     data_manager = DataManager()
     data = data_manager.load_data(
-        symbol=TRADING_CONFIG.operation_code,
+        symbol=STRATEGY_CONFIG.operation_code,
         interval='1h',
-        days_back=BACKTEST_CONFIG.days_back,
+        days_back=STRATEGY_CONFIG.days_back,
         source='binance'
     )
 
@@ -200,7 +191,7 @@ def run_walk_forward_analysis():
     wf_results = wf_analyzer.run_walk_forward_analysis(
         data=data,
         parameter_space=parameter_space,
-        n_windows=BACKTEST_CONFIG.walk_forward_windows,
+        n_windows=STRATEGY_CONFIG.walk_forward_windows,
         optimization_length_pct=0.7,
         max_combinations_per_window=100
     )
@@ -231,9 +222,9 @@ def run_monte_carlo_validation():
     # Carregar dados
     data_manager = DataManager()
     data = data_manager.load_data(
-        symbol=TRADING_CONFIG.operation_code,
+        symbol=STRATEGY_CONFIG.operation_code,
         interval='1h',
-        days_back=BACKTEST_CONFIG.days_back,
+        days_back=STRATEGY_CONFIG.days_back,
         source='binance'
     )
 
@@ -242,18 +233,7 @@ def run_monte_carlo_validation():
         return
 
     # Usar parâmetros padrão ou otimizados
-    config = {
-        'fast_ma': INDICATOR_CONFIG.fast_ma,
-        'slow_ma': INDICATOR_CONFIG.slow_ma,
-        'rsi_period': INDICATOR_CONFIG.rsi_period,
-        'rsi_oversold': INDICATOR_CONFIG.rsi_oversold,
-        'rsi_overbought': INDICATOR_CONFIG.rsi_overbought,
-        'take_profit_pct': TRADING_CONFIG.take_profit_percentage,
-        'stop_loss_pct': TRADING_CONFIG.stop_loss_percentage,
-        'volume_threshold': INDICATOR_CONFIG.volume_threshold,
-        'min_score': 60,
-        'quantity': TRADING_CONFIG.quantity
-    }
+    config = STRATEGY_CONFIG.__dict__.copy()
 
     # Executar Monte Carlo
     mc_validator = MonteCarloValidator()
@@ -261,7 +241,7 @@ def run_monte_carlo_validation():
     mc_results = mc_validator.run_monte_carlo_simulation(
         data=data,
         config=config,
-        n_simulations=BACKTEST_CONFIG.monte_carlo_simulations,
+        n_simulations=STRATEGY_CONFIG.monte_carlo_simulations,
         sample_ratio=0.8
     )
 
@@ -323,8 +303,7 @@ def print_backtest_results(results: dict, title: str):
 
 def save_results(results: dict, test_name: str, config: dict):
     """Salva resultados em arquivo"""
-
-    results_dir = Path("src/data/results")
+    results_dir = Path("data/results")
     results_dir.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -361,8 +340,7 @@ def save_results(results: dict, test_name: str, config: dict):
 
 def save_optimization_results(optimization_results: list, best_params: dict, test_results: dict):
     """Salva resultados da otimização"""
-
-    results_dir = Path("src/data/results")
+    results_dir = Path("data/results")
     results_dir.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -390,8 +368,7 @@ def save_optimization_results(optimization_results: list, best_params: dict, tes
 
 def save_walk_forward_results(wf_results: list, consistency_metrics: dict):
     """Salva resultados walk-forward"""
-
-    results_dir = Path("src/data/results")
+    results_dir = Path("data/results")
     results_dir.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -412,8 +389,7 @@ def save_walk_forward_results(wf_results: list, consistency_metrics: dict):
 
 def save_monte_carlo_results(mc_results: list, statistics: dict):
     """Salva resultados Monte Carlo"""
-
-    results_dir = Path("src/data/results")
+    results_dir = Path("data/results")
     results_dir.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

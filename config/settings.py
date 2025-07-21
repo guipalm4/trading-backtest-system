@@ -40,7 +40,14 @@ class StrategyConfig:
     # Sinais
     min_score: int = 65
 
-    # Outros parâmetros podem ser adicionados conforme necessário
+    # Parâmetros globais do pipeline
+    days_back: int = 365
+    initial_capital: float = 100.0
+    commission: float = 0.001  # 0.1%
+    slippage: float = 0.0005   # 0.05%
+    train_ratio: float = 0.7
+    walk_forward_windows: int = 4
+    monte_carlo_simulations: int = 1000
 
 # Instância global de configuração
 STRATEGY_CONFIG = StrategyConfig()

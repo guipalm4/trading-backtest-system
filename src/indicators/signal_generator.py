@@ -11,96 +11,99 @@ class SignalGenerator:
         self.config = config
 
     def generate_buy_signal(self, data: pd.DataFrame, index: int) -> Tuple[bool, float, Dict]:
-        """Gera sinal de compra para um ponto específico"""
-
-        if index < max(self.config.get('slow_ma', 21), self.config.get('rsi_period', 14)) + 1:
+        """Gera sinal de compra para um ponto específico, usando apenas indicadores ativados"""
+        # Checagem de índice mínimo para indicadores ativados
+        min_index = 0
+        if self.config.get('use_ema', True):
+            min_index = max(min_index, self.config.get('ema_slow', 15))
+        if self.config.get('use_rsi', True):
+            min_index = max(min_index, self.config.get('rsi_period', 7))
+        if index < min_index + 1:
             return False, 0, {}
 
         current = data.iloc[index]
         previous = data.iloc[index - 1]
 
-        # Condições de compra
-        conditions = {
-            'trend_bullish': current['ema_fast'] > current['ema_slow'],
-            'trend_strong': current['trend_strength'] >= self.config.get('min_trend_strength', 0.005),
-            'rsi_favorable': (
-                        self.config.get('rsi_oversold', 30) < current['rsi'] < self.config.get('rsi_overbought', 70)),
-            'macd_bullish': current['macd'] > current['macd_signal'],
-            'price_above_support': current['close'] > current['bb_lower'],
-            'volume_ok': current['volume_ratio'] >= self.config.get('volume_threshold', 1.1),
-            'price_momentum': current['close'] > previous['close'],
-            'not_overbought': current['rsi'] < self.config.get('rsi_overbought', 70)
-        }
-
-        # Pesos das condições
-        weights = {
-            'trend_bullish': 20,
-            'trend_strong': 15,
-            'rsi_favorable': 20,
-            'macd_bullish': 15,
-            'price_above_support': 10,
-            'volume_ok': 10,
-            'price_momentum': 5,
-            'not_overbought': 5
-        }
+        conditions = {}
+        weights = {}
+        # EMA
+        if self.config.get('use_ema', True):
+            conditions['trend_bullish'] = current['ema_fast'] > current['ema_slow']
+            weights['trend_bullish'] = 20
+            conditions['trend_strong'] = current.get('trend_strength', 0) >= self.config.get('min_trend_strength', 0.005)
+            weights['trend_strong'] = 15
+        # RSI
+        if self.config.get('use_rsi', True):
+            conditions['rsi_favorable'] = (
+                self.config.get('rsi_oversold', 30) < current['rsi'] < self.config.get('rsi_overbought', 70))
+            weights['rsi_favorable'] = 20
+            conditions['not_overbought'] = current['rsi'] < self.config.get('rsi_overbought', 70)
+            weights['not_overbought'] = 5
+        # MACD
+        if self.config.get('use_macd', False):
+            conditions['macd_bullish'] = current['macd'] > current['macd_signal']
+            weights['macd_bullish'] = 15
+        # Bollinger
+        if self.config.get('use_bollinger', False):
+            conditions['price_above_support'] = current['close'] > current['bb_lower']
+            weights['price_above_support'] = 10
+        # Volume
+        if self.config.get('use_volume', True):
+            conditions['volume_ok'] = current['volume_ratio'] >= self.config.get('volume_threshold', 1.1)
+            weights['volume_ok'] = 10
+        # Momentum
+        if self.config.get('use_momentum', False):
+            conditions['price_momentum'] = current['price_momentum'] > 0
+            weights['price_momentum'] = 5
 
         # Calcular score
         score = sum(weights[condition] for condition, status in conditions.items() if status)
-
-        # Decisão
         min_score = self.config.get('min_score', 60)
         should_buy = score >= min_score
-
         return should_buy, score, conditions
 
     def generate_sell_signal(self, data: pd.DataFrame, index: int, entry_price: float) -> Tuple[bool, float, Dict, str]:
-        """Gera sinal de venda considerando preço de entrada"""
-
+        """Gera sinal de venda considerando preço de entrada, usando apenas indicadores ativados"""
         current = data.iloc[index]
         previous = data.iloc[index - 1]
-
         current_price = current['close']
         profit_pct = (current_price - entry_price) / entry_price
-
-        # Verificar take profit e stop loss primeiro
         take_profit_pct = self.config.get('take_profit_pct', 0.025)
         stop_loss_pct = self.config.get('stop_loss_pct', 0.015)
-
         if profit_pct >= take_profit_pct:
             return True, 100, {'take_profit': True}, 'take_profit'
-
         if profit_pct <= -stop_loss_pct:
             return True, 100, {'stop_loss': True}, 'stop_loss'
-
-        # Condições técnicas de venda
-        conditions = {
-            'trend_bearish': current['ema_fast'] < current['ema_slow'],
-            'rsi_overbought': current['rsi'] > self.config.get('rsi_overbought', 70),
-            'macd_bearish': current['macd'] < current['macd_signal'],
-            'price_near_resistance': current['close'] > current['bb_upper'] * 0.99,
-            'weak_trend': current['trend_strength'] < self.config.get('min_trend_strength', 0.005),
-            'profitable': profit_pct >= self.config.get('min_profit_to_sell', 0.003),
-            'price_momentum_down': current['close'] < previous['close']
-        }
-
-        # Pesos das condições
-        weights = {
-            'trend_bearish': 35,
-            'rsi_overbought': 25,
-            'macd_bearish': 20,
-            'price_near_resistance': 10,
-            'weak_trend': 5,
-            'price_momentum_down': 5
-        }
-
+        conditions = {}
+        weights = {}
+        # EMA
+        if self.config.get('use_ema', True):
+            conditions['trend_bearish'] = current['ema_fast'] < current['ema_slow']
+            weights['trend_bearish'] = 35
+            conditions['weak_trend'] = current.get('trend_strength', 0) < self.config.get('min_trend_strength', 0.005)
+            weights['weak_trend'] = 5
+        # RSI
+        if self.config.get('use_rsi', True):
+            conditions['rsi_overbought'] = current['rsi'] > self.config.get('rsi_overbought', 70)
+            weights['rsi_overbought'] = 25
+        # MACD
+        if self.config.get('use_macd', False):
+            conditions['macd_bearish'] = current['macd'] < current['macd_signal']
+            weights['macd_bearish'] = 20
+        # Bollinger
+        if self.config.get('use_bollinger', False):
+            conditions['price_near_resistance'] = current['close'] > current['bb_upper'] * 0.99
+            weights['price_near_resistance'] = 10
+        # Momentum
+        if self.config.get('use_momentum', False):
+            conditions['price_momentum_down'] = current['price_momentum'] < 0
+            weights['price_momentum_down'] = 5
+        # Lucro mínimo
+        conditions['profitable'] = profit_pct >= self.config.get('min_profit_to_sell', 0.003)
         # Calcular score
-        score = sum(
-            weights[condition] for condition, status in conditions.items() if status and condition != 'profitable')
-
-        # Decisão (precisa ser lucrativo E ter sinal técnico)
+        score = sum(weights[condition] for condition, status in conditions.items() if status and condition != 'profitable')
         should_sell = score >= 65 and conditions['profitable']
         reason = 'technical_signal' if should_sell else 'hold'
-
         return should_sell, score, conditions, reason
 
     def generate_signals_for_backtest(self, data: pd.DataFrame) -> pd.DataFrame:

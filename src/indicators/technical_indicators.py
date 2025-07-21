@@ -142,96 +142,95 @@ class TechnicalIndicators:
 
     @staticmethod
     def calculate_all_indicators(data: pd.DataFrame, config: Dict[str, Any]) -> pd.DataFrame:
-        """Calcula todos os indicadores técnicos"""
-
+        """Calcula apenas os indicadores ativados na configuração"""
         result = data.copy()
-
         try:
-            # Médias móveis
-            fast_ma = config.get('fast_ma', 9)
-            slow_ma = config.get('slow_ma', 21)
-
-            result['ema_fast'] = TechnicalIndicators.ema(data['close'], fast_ma)
-            result['ema_slow'] = TechnicalIndicators.ema(data['close'], slow_ma)
-            result['sma_volume'] = TechnicalIndicators.sma(data['volume'], 20)
-
-            # RSI
-            rsi_period = config.get('rsi_period', 14)
-            result['rsi'] = TechnicalIndicators.rsi(data['close'], rsi_period)
-
-            # MACD
-            macd_fast = config.get('macd_fast', 12)
-            macd_slow = config.get('macd_slow', 26)
-            macd_signal = config.get('macd_signal', 9)
-
-            macd_line, signal_line, histogram = TechnicalIndicators.macd(
-                data['close'], macd_fast, macd_slow, macd_signal
-            )
-            result['macd'] = macd_line
-            result['macd_signal'] = signal_line
-            result['macd_histogram'] = histogram
-
-            # Bollinger Bands
-            bb_period = config.get('bb_period', 20)
-            bb_std = config.get('bb_std', 2)
-
-            bb_upper, bb_middle, bb_lower = TechnicalIndicators.bollinger_bands(
-                data['close'], bb_period, bb_std
-            )
-            result['bb_upper'] = bb_upper
-            result['bb_middle'] = bb_middle
-            result['bb_lower'] = bb_lower
-
-            # ATR
-            atr_period = config.get('atr_period', 14)
-            result['atr'] = TechnicalIndicators.atr(
-                data['high'], data['low'], data['close'], atr_period
-            )
-
-            # Stochastic
-            stoch_k, stoch_d = TechnicalIndicators.stochastic(
-                data['high'], data['low'], data['close']
-            )
-            result['stoch_k'] = stoch_k
-            result['stoch_d'] = stoch_d
-
-            # Williams %R
-            result['williams_r'] = TechnicalIndicators.williams_r(
-                data['high'], data['low'], data['close']
-            )
-
-            # Volume indicators
-            if 'volume' in data.columns:
-                result['obv'] = TechnicalIndicators.obv(data['close'], data['volume'])
+            # EMA
+            if config.get('use_ema', True):
+                ema_fast = config.get('ema_fast', 7)
+                ema_slow = config.get('ema_slow', 15)
+                result['ema_fast'] = TechnicalIndicators.ema(data['close'], ema_fast)
+                result['ema_slow'] = TechnicalIndicators.ema(data['close'], ema_slow)
+                result['trend_strength'] = (result['ema_fast'] - result['ema_slow']) / result['ema_slow']
+            # SMA volume
+            if config.get('use_volume', True):
+                volume_ma = config.get('volume_ma', 20)
+                result['sma_volume'] = TechnicalIndicators.sma(data['volume'], volume_ma)
                 result['volume_ratio'] = data['volume'] / result['sma_volume']
-            else:
-                result['obv'] = 0
-                result['volume_ratio'] = 1
-
-            # Indicadores customizados
-            result['trend_strength'] = (result['ema_fast'] - result['ema_slow']) / result['ema_slow']
-            result['price_momentum'] = TechnicalIndicators.momentum(data['close'], 5)
-            result['roc'] = TechnicalIndicators.rate_of_change(data['close'], 10)
-
+            # RSI
+            if config.get('use_rsi', True):
+                rsi_period = config.get('rsi_period', 7)
+                result['rsi'] = TechnicalIndicators.rsi(data['close'], rsi_period)
+            # MACD
+            if config.get('use_macd', False):
+                macd_fast = config.get('macd_fast', 12)
+                macd_slow = config.get('macd_slow', 26)
+                macd_signal = config.get('macd_signal', 9)
+                macd_line, signal_line, histogram = TechnicalIndicators.macd(
+                    data['close'], macd_fast, macd_slow, macd_signal
+                )
+                result['macd'] = macd_line
+                result['macd_signal'] = signal_line
+                result['macd_histogram'] = histogram
+            # Bollinger Bands
+            if config.get('use_bollinger', False):
+                bb_period = config.get('bollinger_period', 20)
+                bb_std = config.get('bb_std', 2)
+                bb_upper, bb_middle, bb_lower = TechnicalIndicators.bollinger_bands(
+                    data['close'], bb_period, bb_std
+                )
+                result['bb_upper'] = bb_upper
+                result['bb_middle'] = bb_middle
+                result['bb_lower'] = bb_lower
+            # ATR
+            if config.get('use_atr', False):
+                atr_period = config.get('atr_period', 14)
+                result['atr'] = TechnicalIndicators.atr(
+                    data['high'], data['low'], data['close'], atr_period
+                )
+            # Stochastic
+            if config.get('use_stochastic', False):
+                stoch_k, stoch_d = TechnicalIndicators.stochastic(
+                    data['high'], data['low'], data['close']
+                )
+                result['stoch_k'] = stoch_k
+                result['stoch_d'] = stoch_d
+            # Williams %R
+            if config.get('use_williams_r', False):
+                wr_period = config.get('williams_r_period', 14)
+                result['williams_r'] = TechnicalIndicators.williams_r(
+                    data['high'], data['low'], data['close'], wr_period
+                )
+            # OBV
+            if config.get('use_volume', True) and 'volume' in data.columns:
+                result['obv'] = TechnicalIndicators.obv(data['close'], data['volume'])
+            # Momentum
+            if config.get('use_momentum', False):
+                momentum_period = config.get('momentum_period', 5)
+                result['price_momentum'] = TechnicalIndicators.momentum(data['close'], momentum_period)
+            # ROC
+            if config.get('use_roc', False):
+                roc_period = config.get('roc_period', 10)
+                result['roc'] = TechnicalIndicators.rate_of_change(data['close'], roc_period)
             # Donchian Channels
-            donch_upper, donch_middle, donch_lower = TechnicalIndicators.donchian_channels(
-                data['high'], data['low'], 20
-            )
-            result['donch_upper'] = donch_upper
-            result['donch_middle'] = donch_middle
-            result['donch_lower'] = donch_lower
-
+            if config.get('use_donchian', False):
+                donch_period = config.get('donchian_period', 20)
+                donch_upper, donch_middle, donch_lower = TechnicalIndicators.donchian_channels(
+                    data['high'], data['low'], donch_period
+                )
+                result['donch_upper'] = donch_upper
+                result['donch_middle'] = donch_middle
+                result['donch_lower'] = donch_lower
             # CCI
-            result['cci'] = TechnicalIndicators.commodity_channel_index(
-                data['high'], data['low'], data['close']
-            )
-
-            logging.info("✅ Todos os indicadores calculados com sucesso")
-
+            if config.get('use_cci', False):
+                cci_period = config.get('cci_period', 20)
+                result['cci'] = TechnicalIndicators.commodity_channel_index(
+                    data['high'], data['low'], data['close'], cci_period
+                )
+            logging.info("✅ Indicadores calculados conforme configuração")
         except Exception as e:
             logging.error(f"Erro ao calcular indicadores: {e}")
             raise
-
         return result
 
     @staticmethod

@@ -41,16 +41,24 @@ def sample_data():
 def sample_config():
     """Configuração de exemplo para testes"""
     return {
-        'fast_ma': 9,
-        'slow_ma': 21,
-        'rsi_period': 14,
-        'rsi_oversold': 30,
-        'rsi_overbought': 70,
-        'take_profit_pct': 0.025,
-        'stop_loss_pct': 0.015,
-        'volume_threshold': 1.2,
-        'min_score': 60,
-        'quantity': 0.001
+        'use_ema': True,
+        'ema_fast': 7,
+        'ema_slow': 15,
+        'use_rsi': True,
+        'rsi_period': 7,
+        'rsi_oversold': 20,
+        'rsi_overbought': 75,
+        'use_macd': False,
+        'use_bollinger': False,
+        'use_volume': True,
+        'volume_ma': 20,
+        'volume_threshold': 1.3,
+        'min_trend_strength': 0.2,
+        'min_score': 65,
+        'take_profit_pct': 0.01,
+        'stop_loss_pct': 0.007,
+        'min_profit_to_sell': 0.002,
+        'quantity': 0.01
     }
 
 

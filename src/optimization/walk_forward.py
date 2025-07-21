@@ -90,6 +90,12 @@ class WalkForwardAnalyzer:
                     n_jobs=2  # Menos paralelismo para não sobrecarregar
                 )
 
+                # Ao rodar o backtest na janela de teste, mesclar STRATEGY_CONFIG.__dict__ com best_params antes de passar para o BacktestEngine.
+                # Exemplo:
+                # config = STRATEGY_CONFIG.__dict__.copy()
+                # config.update(best_params)
+                # test_result = test_engine.run_backtest(test_data, config)
+                # ...
                 # Testar na janela de teste (out-of-sample)
                 test_engine = BacktestEngine(self.initial_capital, self.commission)
                 test_result = test_engine.run_backtest(test_data, best_params)

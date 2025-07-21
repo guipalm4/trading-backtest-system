@@ -214,6 +214,11 @@ class ParameterOptimizer:
                 commission=self.commission
             )
 
+            # No método optimize_parameters, ao rodar o backtest, mesclar STRATEGY_CONFIG.__dict__ com os parâmetros otimizados (params) antes de passar para o BacktestEngine.
+            # Exemplo:
+            # config = STRATEGY_CONFIG.__dict__.copy()
+            # config.update(params)
+            # result = engine.run_backtest(data, config)
             results = engine.run_backtest(data, params)
 
             # Adicionar parâmetros ao resultado

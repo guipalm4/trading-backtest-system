@@ -132,47 +132,37 @@ class BacktestEngine:
         return True
 
     def run_backtest(self, data: pd.DataFrame, config: Dict) -> Dict:
-        """Executa backtest completo"""
-
+        """Executa backtest completo com configuração de estratégia parametrizável"""
         self.reset()
-
-        # Calcular indicadores
+        # Calcular indicadores apenas os ativados
         data_with_indicators = TechnicalIndicators.calculate_all_indicators(data, config)
-
-        # Gerar sinais
+        # Gerar sinais apenas com os ativados
         signal_generator = SignalGenerator(config)
         data_with_signals = signal_generator.generate_signals_for_backtest(data_with_indicators)
-
         # Simular trades
         for i, row in data_with_signals.iterrows():
             current_price = row['close']
             timestamp = row['timestamp']
-
             # Registrar equity
             current_equity = self.capital
             if self.position > 0:
                 current_equity += self.position * current_price
-
             self.equity_curve.append({
                 'timestamp': timestamp,
                 'equity': current_equity,
                 'price': current_price,
                 'position': self.position > 0
             })
-
             # Executar sinais
             if row['buy_signal'] and self.position == 0:
                 quantity = config.get('quantity', None)
                 self.execute_buy(current_price, timestamp, quantity)
-
             elif row['sell_signal'] and self.position > 0:
                 self.execute_sell(current_price, timestamp, row['signal_reason'])
-
         # Fechar posição final se necessário
         if self.position > 0:
             final_row = data_with_signals.iloc[-1]
             self.execute_sell(final_row['close'], final_row['timestamp'], 'end_of_data')
-
         return self.calculate_performance_metrics()
 
     def calculate_performance_metrics(self) -> Dict:

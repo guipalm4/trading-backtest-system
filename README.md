@@ -1,119 +1,192 @@
-# 🚀 Trading Backtest System
+# Trading Backtest System
 
-[![Python](https://img.shields.io/badge/Python-3.13-blue.svg)](https://python.org)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-2.0.0-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-95%25-brightgreen.svg)](tests/)
-[![Documentation](https://img.shields.io/badge/Docs-Complete-blue.svg)](docs/)
-
-> **Sistema Profissional de Backtesting e Otimização para Trading Algorítmico**
-
-Um sistema completo e robusto para validação científica de estratégias de trading, com metodologias anti-overfitting e análises estatísticas avançadas.
+Sistema profissional de backtesting e otimização de estratégias de trading.
 
 ---
 
-## �� Índice
+## Principais Features
 
-- [🎯 Visão Geral](#-visão-geral)
-- [✨ Características](#-características)
-- [🛠️ Instalação](#️-instalação)
-- [🚀 Uso Rápido](#-uso-rápido)
-- [📊 Funcionalidades](#-funcionalidades)
-- [📈 Exemplos](#-exemplos)
-- [🔧 Configuração](#-configuração)
-- [📚 Documentação](#-documentação)
-- [🤝 Contribuição](#-contribuição)
-- [📄 Licença](#-licença)
+- **Configuração centralizada e extensível**: Todos os parâmetros de trading, indicadores e sinais são definidos em `StrategyConfig` (`config/settings.py`).
+- **Indicadores parametrizáveis**: Ative/desative indicadores e ajuste seus parâmetros facilmente.
+- **Espaço de parâmetros flexível**: Otimize não só os valores, mas também quais indicadores usar.
+- **Backtest, otimização, walk-forward e Monte Carlo** integrados.
+- **Scripts automatizados para busca de estratégias vencedoras.**
+- **Resultados detalhados e exportáveis.**
 
 ---
 
-## 🎯 Visão Geral
+## Instalação
 
-O **Trading Backtest System** é uma solução profissional para traders algorítmicos que precisam validar suas estratégias de forma científica e robusta. O sistema oferece múltiplas camadas de validação para evitar overfitting e garantir resultados confiáveis.
+1. **Clone o repositório:**
 
-### 📚 Documentação
-📖 Estrutura do Projeto
-trading-backtest-pro/
-├── 📁 config/              # Configurações
-│   ├── settings.py         # Configurações principais
-│   └── parameters.py       # Espaços de parâmetros
-├── 📁 src/                 # Código fonte
-│   ├── 📁 data/           # Carregamento de dados
-│   ├── 📁 indicators/     # Indicadores técnicos
-│   ├── 📁 backtest/       # Engine de backtest
-│   ├── 📁 optimization/   # Otimização
-│   └── 📁 utils/          # Utilitários
-├── 📁 data/               # Dados e cache
-│   ├── 📁 cache/         # Cache de dados
-│   ├── 📁 results/       # Resultados
-│   └── 📁 exports/       # Exportações
-├── 📁 docs/               # Documentação
-├── 🧪 tests/              # Testes
-├── 📄 requirements.txt    # Dependências
-├── 🚀 run_backtest.py     # Script principal
-└── 📄 README.md          # Este arquivo
+   ```bash
+   git clone <url-do-repo>
+   cd trading-backtest-system
+   ```
 
-### 🎪 Por que usar este sistema?
+2. **Crie e ative um ambiente virtual:**
 
-- 🛡️ **Anti-Overfitting**: Walk-forward analysis e Monte Carlo validation
-- ⚡ **Performance**: Processamento paralelo e cache inteligente
-- 📊 **Completo**: 50+ métricas de performance e visualizações
-- 🔧 **Flexível**: Configurável para qualquer estratégia
-- 🧪 **Científico**: Metodologias validadas academicamente
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # Linux/Mac
+   .venv\Scripts\activate     # Windows
+   ```
+
+3. **Instale as dependências:**
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Configure suas API keys (se for usar dados da Binance):**
+   - Defina as variáveis de ambiente `BINANCE_API_KEY` e `BINANCE_API_SECRET` ou edite seu `.env`.
 
 ---
 
-## ✨ Características
+## Estrutura dos Arquivos
 
-### 🔥 Funcionalidades Principais
-
-| Funcionalidade               | Descrição | Status |
-|------------------------------|---|---|
-| 📡 **Carregamento de Dados** | Binance, Yahoo Finance, arquivos locais | ✅ |
-| 🧠 **Cache Inteligente**     | Sistema automático de cache | ✅ |
-| 🔍 **Validação de Dados**    | Detecção e correção automática | ✅ |
-| 📊 **Indicadores Técnicos**  | 20+ indicadores incluídos | ✅ |
-| ⚡ **Engine de Backtest**     | Simulação realista com custos | ✅ |
-| 🧬 **Otimização**            | Grid, Random e Bayesian search | ✅ |
-| 🚶 **Walk-Forward**          | Validação temporal progressiva | ✅ |
-| 🎲 **Monte Carlo**           | Análise de robustez estatística | ✅ |
-| 📈 **Relatórios**            | Análises detalhadas e gráficos | ✅ |
-| 🌐 **Dashboard Web**         | Interface interativa | 🔄 |
-
-### 📊 Métricas Calculadas
-
-- **Retorno**: Total, Anualizado, Ajustado ao Risco
-- **Risco**: Max Drawdown, VaR, CVaR, Volatilidade
-- **Ratios**: Sharpe, Sortino, Calmar, Information
-- **Trading**: Win Rate, Profit Factor, Expectancy
-- **Consistência**: Performance mensal, estabilidade
+- `config/settings.py`: Configuração centralizada da estratégia (`StrategyConfig`).
+- `config/parameters.py`: Espaço de parâmetros para otimização.
+- `src/`: Código-fonte principal (backtest, indicadores, otimização, etc).
+- `run_backtest.py`: Script principal para rodar backtest, otimização, walk-forward e Monte Carlo.
+- `auto_strategy_search.py`: Script para busca automática de estratégias vencedoras.
+- `src/data/results/`: Resultados detalhados dos testes.
 
 ---
 
-## 🛠️ Instalação
+## Exemplo de Configuração (`StrategyConfig`)
 
-### Pré-requisitos
+```python
+@dataclass
+class StrategyConfig:
+    # Trading
+    operation_code: str = 'ETHBRL'
+    asset_code: str = 'ETH'
+    candle_interval: str = Client.KLINE_INTERVAL_5MINUTE
+    quantity: float = 0.01
+    take_profit_pct: float = 0.01
+    stop_loss_pct: float = 0.007
+    min_profit_to_sell: float = 0.002
+    max_daily_loss_percentage: float = 0.10
+    max_concurrent_positions: int = 1
+    # Indicadores
+    use_ema: bool = True
+    ema_fast: int = 7
+    ema_slow: int = 15
+    use_rsi: bool = True
+    rsi_period: int = 7
+    rsi_oversold: int = 20
+    rsi_overbought: int = 75
+    use_macd: bool = False
+    macd_fast: int = 12
+    macd_slow: int = 26
+    macd_signal: int = 9
+    use_bollinger: bool = False
+    bollinger_period: int = 20
+    use_volume: bool = True
+    volume_ma: int = 20
+    volume_threshold: float = 1.3
+    use_trend: bool = True
+    min_trend_strength: float = 0.2
+    # Sinais
+    min_score: int = 65
+```
 
-- Python 3.8+
-- 8GB RAM (16GB recomendado)
-- 2GB espaço livre
+---
 
-### Instalação Rápida
+## Como rodar o sistema
+
+### 1. Backtest simples
 
 ```bash
-# Clonar repositório
-git clone https://github.com/seu-usuario/trading-backtest-pro.git
-cd trading-backtest-pro
+python run_backtest.py
+# Escolha a opção 1 no menu
+```
 
-# Criar ambiente virtual
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# ou
-venv\Scripts\activate     # Windows
+### 2. Otimização de parâmetros
 
-# Instalar dependências
-pip install -r requirements.txt
+```bash
+python run_backtest.py
+# Escolha a opção 2 no menu
+# Escolha o perfil de estratégia (Scalping, Swing, Default)
+```
 
-# Configurar ambiente
-cp .env.example .env
-# Editar .env com suas configurações
+- O sistema irá otimizar tanto os valores quanto a ativação dos indicadores.
+
+### 3. Walk-forward
+
+```bash
+python run_backtest.py
+# Escolha a opção 3 no menu
+```
+
+### 4. Monte Carlo
+
+```bash
+python run_backtest.py
+# Escolha a opção 4 no menu
+```
+
+### 5. Análise completa
+
+```bash
+python run_backtest.py
+# Escolha a opção 5 no menu
+```
+
+### 6. Busca automática de estratégia vencedora
+
+```bash
+python auto_strategy_search.py
+```
+
+- O script irá rodar várias otimizações, ajustando ranges e ativação dos indicadores até encontrar uma estratégia vencedora.
+
+---
+
+## Como ativar/desativar indicadores
+
+- Ajuste os campos `use_ema`, `use_rsi`, `use_macd`, `use_bollinger`, `use_volume`, `use_momentum` na sua configuração.
+- O otimizador pode testar combinações de ativação automaticamente.
+
+---
+
+## Como adicionar novos indicadores
+
+1. Implemente o cálculo no `TechnicalIndicators`.
+2. Adicione o parâmetro de ativação e os parâmetros do indicador em `StrategyConfig` e no espaço de parâmetros.
+3. Adapte o `SignalGenerator` para usar o novo indicador se ativado.
+
+---
+
+## Interpretação dos resultados
+
+- Resultados detalhados são salvos em `src/data/results/`.
+- Incluem métricas, equity curve, trades detalhados e configurações usadas.
+- Use os arquivos `.json` e `.csv` para análise posterior.
+
+---
+
+## Testes
+
+- Os testes usam a nova estrutura de configuração.
+- Veja `tests/conftest.py` para exemplos de configs de teste.
+- Para rodar os testes:
+
+  ```bash
+  pytest
+  ```
+
+---
+
+## Troubleshooting
+
+- **Erro de importação de indicadores/config:** Certifique-se de que está usando sempre `STRATEGY_CONFIG` e que todos os parâmetros necessários estão presentes.
+- **Dados não carregam:** Verifique suas chaves de API e conexão com a internet.
+- **Resultados ruins:** Tente ajustar os ranges de parâmetros, ativar/desativar indicadores, ou mudar o timeframe.
+
+---
+
+## Dúvidas ou contribuições
+
+Abra uma issue ou envie um pull request!

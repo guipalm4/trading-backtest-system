@@ -234,7 +234,7 @@ class ParameterOptimizer:
             }
 
     def optimize_parameters(self, data: pd.DataFrame, parameter_space: Dict[str, List[Any]],
-                            max_combinations: int = 500, n_jobs: int = -1) -> Tuple[
+                            max_combinations: int = 500, n_jobs: int = -1, score_weights: dict = None) -> Tuple[
         Dict[str, Any], List[Dict[str, Any]]]:
         """Executa otimização completa de parâmetros"""
 
@@ -263,7 +263,7 @@ class ParameterOptimizer:
         logging.info(f"✅ Backtests válidos: {len(valid_results)}/{len(results)}")
 
         # Encontrar melhor configuração
-        best_result = self._select_best_configuration(valid_results)
+        best_result = self._select_best_configuration(valid_results, score_weights=score_weights)
 
         # Extrair parâmetros da melhor configuração
         best_params = {}
@@ -282,8 +282,8 @@ class ParameterOptimizer:
 
         return best_params, valid_results
 
-    def _select_best_configuration(self, results: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Seleciona a melhor configuração usando múltiplos critérios"""
+    def _select_best_configuration(self, results: List[Dict[str, Any]], score_weights: dict = None) -> Dict[str, Any]:
+        """Seleciona a melhor configuração usando múltiplos critérios e pesos configuráveis"""
 
         df = pd.DataFrame(results)
 
@@ -325,13 +325,22 @@ class ParameterOptimizer:
         else:
             df_filtered['norm_max_drawdown'] = 0.5
 
-        # Score composto
+        # Pesos configuráveis por perfil
+        if score_weights is None:
+            score_weights = {
+                'total_return': 0.30,
+                'max_drawdown': 0.25,
+                'sharpe_ratio': 0.20,
+                'win_rate': 0.15,
+                'profit_factor': 0.10
+            }
+
         df_filtered['composite_score'] = (
-                df_filtered.get('norm_total_return', 0) * 0.30 +
-                df_filtered.get('norm_max_drawdown', 0) * 0.25 +
-                df_filtered.get('norm_sharpe_ratio', 0) * 0.20 +
-                df_filtered.get('norm_win_rate', 0) * 0.15 +
-                df_filtered.get('norm_profit_factor', 0) * 0.10
+            df_filtered.get('norm_total_return', 0) * score_weights.get('total_return', 0) +
+            df_filtered.get('norm_max_drawdown', 0) * score_weights.get('max_drawdown', 0) +
+            df_filtered.get('norm_sharpe_ratio', 0) * score_weights.get('sharpe_ratio', 0) +
+            df_filtered.get('norm_win_rate', 0) * score_weights.get('win_rate', 0) +
+            df_filtered.get('norm_profit_factor', 0) * score_weights.get('profit_factor', 0)
         )
 
         # Retornar melhor configuração

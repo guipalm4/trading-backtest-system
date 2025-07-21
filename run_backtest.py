@@ -87,6 +87,37 @@ def run_parameter_optimization():
     print("🔬 EXECUTANDO OTIMIZAÇÃO DE PARÂMETROS")
     print("=" * 50)
 
+    # Escolher perfil de estratégia
+    print("\nEscolha o perfil de estratégia para otimização:")
+    print("1. Scalping (trades rápidos, stops curtos)")
+    print("2. Swing (operações mais longas)")
+    print("3. Default (genérico)")
+    perfil = input("Digite sua escolha (1-3): ").strip()
+    if perfil == "1":
+        parameter_space = ParameterSpace.get_scalping_space()
+        print("\nPerfil selecionado: Scalping")
+        score_weights = {
+            'total_return': 0.10,
+            'max_drawdown': 0.40,
+            'sharpe_ratio': 0.10,
+            'win_rate': 0.20,
+            'profit_factor': 0.20
+        }
+    elif perfil == "2":
+        parameter_space = ParameterSpace.get_swing_space()
+        print("\nPerfil selecionado: Swing")
+        score_weights = {
+            'total_return': 0.30,
+            'max_drawdown': 0.20,
+            'sharpe_ratio': 0.20,
+            'win_rate': 0.15,
+            'profit_factor': 0.15
+        }
+    else:
+        parameter_space = ParameterSpace.get_default_space()
+        print("\nPerfil selecionado: Default")
+        score_weights = None  # Usar padrão do otimizador
+
     # Carregar dados
     data_manager = DataManager()
     data = data_manager.load_data(
@@ -111,14 +142,12 @@ def run_parameter_optimization():
     # Otimizar parâmetros
     optimizer = ParameterOptimizer()
 
-    # Usar espaço conservador para começar
-    parameter_space = ParameterSpace.get_conservative_space()
-
     best_params, optimization_results = optimizer.optimize_parameters(
         data=train_data,
         parameter_space=parameter_space,
         max_combinations=200,
-        n_jobs=4  # Processamento paralelo
+        n_jobs=4,  # Processamento paralelo
+        score_weights=score_weights
     )
 
     print(f"\n🏆 MELHORES PARÂMETROS ENCONTRADOS:")

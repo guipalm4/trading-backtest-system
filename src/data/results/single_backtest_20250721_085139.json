@@ -1,0 +1,50 @@
+{
+  "timestamp": "20250721_085139",
+  "test_name": "single_backtest",
+  "config": {
+    "fast_ma": 9,
+    "slow_ma": 21,
+    "rsi_period": 14,
+    "rsi_oversold": 30,
+    "rsi_overbought": 70,
+    "take_profit_pct": 0.025,
+    "stop_loss_pct": 0.015,
+    "min_profit_to_sell": 0.003,
+    "volume_threshold": 1.1,
+    "min_trend_strength": 0.005,
+    "min_score": 60,
+    "quantity": 0.0003
+  },
+  "results": {
+    "total_return": -0.08848991389516356,
+    "net_profit": -8.240602012500013,
+    "gross_profit": 18.856147875749997,
+    "gross_loss": 27.09674988825001,
+    "total_trades": 404,
+    "winning_trades": 171,
+    "losing_trades": 233,
+    "win_rate": 0.42326732673267325,
+    "profit_factor": 0.6958822719888855,
+    "expectancy": -0.020397529733910937,
+    "max_drawdown": -0.10219006687097003,
+    "sharpe_ratio": -0.5568370424617577,
+    "avg_win": 0.11026987061842103,
+    "avg_loss": -0.1162950638980687,
+    "largest_win": 0.3678292935,
+    "largest_loss": -0.28210221374999883,
+    "avg_trade_duration": "0 days 13:47:49.306930693",
+    "total_costs": 6.1552330125,
+    "avg_cost_per_trade": 0.015235725278465347,
+    "max_consecutive_wins": 6,
+    "max_consecutive_losses": 9,
+    "initial_capital": 93.0,
+    "final_capital": 84.77043800774979
+  },
+  "summary": {
+    "total_return": -0.08848991389516356,
+    "max_drawdown": -0.10219006687097003,
+    "sharpe_ratio": -0.5568370424617577,
+    "total_trades": 404,
+    "win_rate": 0.42326732673267325
+  }
+}

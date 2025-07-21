@@ -1,0 +1,19 @@
+# Dependências específicas para testes
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-mock>=3.10.0
+pytest-xdist>=3.0.0  # Para testes paralelos
+pytest-benchmark>=4.0.0  # Para benchmarks
+pytest-timeout>=2.1.0  # Para timeout de testes
+
+# Ferramentas de qualidade de código
+flake8>=5.0.0
+black>=22.0.0
+isort>=5.10.0
+mypy>=0.991
+
+# Pre-commit hooks
+pre-commit>=2.20.0
+
+# Cobertura de código
+coverage>=6.5.0

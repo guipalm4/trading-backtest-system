@@ -6,17 +6,26 @@ class ParameterSpace:
 
     @staticmethod
     def get_scalping_space() -> Dict[str, List[Any]]:
-        """Parâmetros para scalping: foco em trades rápidos, stops curtos e drawdown baixo"""
+        """Parâmetros para scalping menos agressivo"""
         return {
-            'fast_ma_period': [3, 5, 7],
-            'slow_ma_period': [10, 12, 15],
-            'rsi_period': [5, 7],
-            'rsi_oversold': [15, 20],
-            'rsi_overbought': [80, 85],
-            'take_profit_pct': [0.002, 0.003, 0.005],
-            'stop_loss_pct': [0.002, 0.003, 0.005],
-            'volume_threshold': [1.1, 1.2],
-            'min_score': [60, 70]
+            # Médias móveis um pouco mais longas
+            'fast_ma_period': [5, 7, 9],
+            'slow_ma_period': [12, 15, 18],
+
+            # RSI ainda sensível, mas não extremo
+            'rsi_period': [7, 10],
+            'rsi_oversold': [20, 25],
+            'rsi_overbought': [75, 80],
+
+            # Stops e targets um pouco maiores
+            'take_profit_pct': [0.007, 0.01, 0.015],   # 0.7% a 1.5%
+            'stop_loss_pct': [0.007, 0.01, 0.015],     # 0.7% a 1.5%
+
+            # Volume mais exigente
+            'volume_threshold': [1.2, 1.3, 1.4],
+
+            # Score mais seletivo
+            'min_score': [65, 70, 75]
         }
 
     @staticmethod

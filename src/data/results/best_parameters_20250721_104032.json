@@ -1,0 +1,21 @@
+{
+  "timestamp": "20250721_104032",
+  "best_parameters": {
+    "fast_ma_period": 9,
+    "slow_ma_period": 18,
+    "rsi_period": 7,
+    "rsi_oversold": 25,
+    "rsi_overbought": 75,
+    "take_profit_pct": 0.015,
+    "stop_loss_pct": 0.01,
+    "volume_threshold": 1.2,
+    "min_score": 65
+  },
+  "test_results_summary": {
+    "total_return": -0.009694233304242345,
+    "max_drawdown": -0.25176588208637923,
+    "sharpe_ratio": 0.024526294698351655,
+    "total_trades": 174,
+    "win_rate": 0.5229885057471264
+  }
+}

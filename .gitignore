@@ -194,6 +194,10 @@ backtest_results/
 logs/
 *.log
 
+# Allow src/data directory
+!src/data/
+!src/data/**
+
 # Model files
 *.pkl
 *.pickle
